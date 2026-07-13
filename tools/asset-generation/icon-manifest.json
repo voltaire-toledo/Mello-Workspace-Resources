@@ -1,0 +1,13 @@
+{
+  "sizes": [256, 64, 48, 32, 24, 16],
+  "icons": [
+    {
+      "source": "../../sources/icons/working/v2603-logo.png",
+      "output": "v2603-logo_png.ico"
+    },
+    {
+      "source": "../../sources/icons/working/TrayIco-suspend-m.svg",
+      "output": "TrayIco-suspend-m.ico"
+    }
+  ]
+}

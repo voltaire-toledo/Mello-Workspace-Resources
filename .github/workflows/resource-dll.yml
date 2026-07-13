@@ -1,0 +1,91 @@
+name: Resource DLL
+
+on:
+  push:
+    branches: [main]
+    tags: ['resources/v*']
+    paths:
+      - 'resource-dll/**'
+      - 'tools/validation/**'
+      - 'tools/audio-generation/manifest.json'
+      - '.github/workflows/resource-dll.yml'
+  pull_request:
+    paths:
+      - 'resource-dll/**'
+      - 'tools/validation/**'
+      - 'tools/audio-generation/manifest.json'
+      - '.github/workflows/resource-dll.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2025
+    permissions:
+      contents: read
+    outputs:
+      profile: ${{ steps.profile.outputs.profile }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Select profile
+        id: profile
+        shell: pwsh
+        run: |
+          $profile = 'v2603'
+          if ($env:GITHUB_REF -like 'refs/tags/resources/v*') {
+            $profile = ($env:GITHUB_REF_NAME.Split('/')[-1] -split '\.')[0]
+          }
+          if (-not (Test-Path "resource-dll/profiles/$profile/manifest.json")) {
+            throw "Tag does not identify a committed profile: $profile"
+          }
+          "profile=$profile" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "PROFILE=$profile" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Validate manifests and repository references
+        shell: pwsh
+        run: ./tools/validation/Test-Repository.ps1
+
+      - name: Enter Visual Studio developer environment
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installation = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installation) { throw 'Visual Studio C++ tools are unavailable.' }
+          Import-Module "$installation\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
+          Enter-VsDevShell -VsInstallPath $installation -SkipAutomaticLocation -DevCmdArguments '-arch=x86 -host_arch=x64'
+          ./resource-dll/Build-ResourceDll.ps1 -Profile $env:PROFILE -Force
+          ./tools/validation/Test-DllResources.ps1 -DllPath "dist/$env:PROFILE/MOResources.dll" -ManifestPath "resource-dll/profiles/$env:PROFILE/manifest.json"
+
+      - name: Upload resource DLL
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: mello-resources-${{ env.PROFILE }}
+          path: |
+            dist/${{ env.PROFILE }}/MOResources.dll
+            build/${{ env.PROFILE }}/MOResources.res
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/resources/v')
+    needs: build
+    runs-on: windows-2025
+    permissions:
+      contents: write
+    steps:
+      - name: Download built resource artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: mello-resources-${{ needs.build.outputs.profile }}
+          path: release-assets
+
+      - name: Publish tagged release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PROFILE: ${{ needs.build.outputs.profile }}
+        run: >-
+          gh release create "$env:GITHUB_REF_NAME"
+          "release-assets/dist/$env:PROFILE/MOResources.dll#MOResources.dll"
+          --verify-tag --generate-notes --title "$env:GITHUB_REF_NAME"

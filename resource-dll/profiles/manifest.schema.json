@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Mello Workspace resource profile",
+  "type": "object",
+  "required": ["profile", "outputName", "architecture", "version", "metadata", "resources"],
+  "properties": {
+    "profile": { "type": "string", "pattern": "^v[0-9]+$" },
+    "outputName": { "type": "string", "pattern": "^[^/\\\\]+\\.dll$" },
+    "architecture": { "enum": ["x86", "x64"] },
+    "version": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "symbol", "type", "path"],
+        "properties": {
+          "id": { "type": "integer", "minimum": 1, "maximum": 65535 },
+          "symbol": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]+$" },
+          "type": { "enum": ["ICON", "WAVE", "RCDATA"] },
+          "path": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

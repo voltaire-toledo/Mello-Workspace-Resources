@@ -1,0 +1,16 @@
+{
+  "voice": "en-US-AriaNeural",
+  "rate": "+0%",
+  "volume": "+0%",
+  "pitch": "+0Hz",
+  "schedule": {
+    "start": "00:00",
+    "intervalMinutes": 30,
+    "count": 48
+  },
+  "phraseTemplates": {
+    "onHour": "The time is {hour12} o'clock {ampm}.",
+    "halfHour": "The time is {hour12} thirty {ampm}."
+  },
+  "fileTemplate": "Time_{hour24}_{minute}.mp3"
+}

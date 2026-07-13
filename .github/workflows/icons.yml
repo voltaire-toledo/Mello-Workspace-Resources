@@ -1,0 +1,35 @@
+name: Generate Icons
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sources/icons/**'
+      - 'tools/asset-generation/**'
+      - '.github/workflows/icons.yml'
+  pull_request:
+    paths:
+      - 'sources/icons/**'
+      - 'tools/asset-generation/**'
+      - '.github/workflows/icons.yml'
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: windows-2025
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Generate and validate ICO frames
+        shell: pwsh
+        run: ./tools/asset-generation/Generate-Icons.ps1 -OutputDirectory dist/generated-icons
+
+      - name: Upload generated icons
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: generated-icons
+          path: dist/generated-icons/*.ico
+          if-no-files-found: error
