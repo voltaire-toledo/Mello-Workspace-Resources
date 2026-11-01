@@ -8,3 +8,11 @@ __pycache__/
 .DS_Store
 Thumbs.db
 AGENTS.md
+
+# YABA Scaffold exceptions
+!AGENTS.md
+!.ai/**
+!.agents/**
+!.claude/**
+!backlog.config.yml
+
