@@ -1,5 +1,7 @@
 # PROJECT DIRECTORY INSTRUCTIONS
 
+@../.agents/roles/Homer/SKILL.md
+
 Scaffold Version: 0.8
 
 These rules apply to any agents working in this repository. Only global or user-global systems, runtimes, and user instructions can take precendence. This file is complete on its own; the documents it links explain rationale and detail.
